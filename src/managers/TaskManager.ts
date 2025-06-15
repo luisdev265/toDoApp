@@ -1,4 +1,4 @@
-import type { Gestor } from "../types/Gestor";
+import type { Gestor } from "../types/TaskManager";
 import { Task } from "../types/Tareas";
 import { pool } from "../db/pool";
 import { OkPacket } from "mysql2";
