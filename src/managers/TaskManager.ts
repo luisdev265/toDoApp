@@ -10,13 +10,13 @@ export class TaskManager implements Gestor {
     this.idUser = id;
   }
 
-  async agregarTarea(task: Task): Promise<object> {
-    const { title, description, priority, state } = task;
+  async createTask(task: Task): Promise<object> {
+    const { title, description, priority, status } = task;
 
     const query =
       "INSERT into tasks (title, description, priority, state, idUser) values (?, ?, ?, ?, ?)";
 
-    const values = [title, description, priority, state, this.idUser];
+    const values = [title, description, priority, status, this.idUser];
 
     try {
       const [result] = await pool.query<OkPacket>(query, values);
