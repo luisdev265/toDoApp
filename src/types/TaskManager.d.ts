@@ -5,7 +5,7 @@ import { genericResponse } from "./genericResponses";
  * Interface implemented by the TaskManager class.
  * Used to manage tasks for a specific user.
  */
-export interface Gestor {
+export interface Manager {
   /**
    * The ID of the user associated with this task manager.
    */

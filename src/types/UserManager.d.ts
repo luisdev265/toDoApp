@@ -5,13 +5,13 @@ import { genericResponse } from "./genericResponses";
  * Interface implemented by the UserManager class.
  * Provides basic functions for user authentication.
  */
-export interface UsersManager {
+export interface UserManager {
   /**
    * Registers a new user.
    * @param userData - Data submitted in the user registration form.
    * @returns A promise that resolves to a generic API response containing the registered user and a JWT token.
    */
-  createUser(userData: Users): Promise<genericResponse<[user?: Users, token?: string]>>;
+  createUser(userData: Users): Promise<genericResponse<{user: Omit<Users, "password">, token: string} | undefined>>;
 
   /**
    * Validates user credentials and logs in the user.

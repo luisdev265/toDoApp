@@ -1,16 +1,17 @@
-import type { Gestor } from "../types/TaskManager";
+import type { Manager } from "../types/TaskManager";
 import { Task } from "../types/Tareas";
 import { pool } from "../db/pool";
 import { OkPacket } from "mysql2";
+import { genericResponse } from "../types/genericResponses";
 
-export class TaskManager implements Gestor {
+export class TaskManager implements Manager {
   private idUser: number;
 
-  constructor(id: Gestor["idUser"]) {
+  constructor(id: Manager["idUser"]) {
     this.idUser = id;
   }
 
-  async createTask(task: Task): Promise<object> {
+  async createTask(task: Task): Promise<genericResponse<Task>> {
     const { title, description, priority, status } = task;
 
     const query =
