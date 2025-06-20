@@ -1,5 +1,5 @@
 import { pool } from "../db/pool";
-import type { Users } from "../types/Users";
+import type { Users, AuthUser } from "../types/Users";
 import type { OkPacket, RowDataPacket } from "mysql2";
 import { error } from "../utils/manageError";
 
@@ -7,9 +7,11 @@ type PublicUser = Omit<Users, "password">;
 
 /**
  * Creates a new user in the database.
- * @param userData - User data including name, email, and password.
- * @returns A promise that resolves to the created user (without password) with its ID, or undefined in case of failure.
+ * @param userData - Object containing the user's name, email, and password.
+ * @returns A promise that resolves to the created user object (without the password) including its ID.
+ *          Throws an error if the user creation fails.
  */
+
 export const userRegister = async (
   userData: Users
 ): Promise<PublicUser> => {
@@ -47,27 +49,33 @@ export const userRegister = async (
  */
 export const userAuth = async (
   userData: Pick<Users, "email">
-): Promise<Pick<Users, "id" | "password"> | undefined> => {
+): Promise<AuthUser> => {
   const { email } = userData;
 
-  const query = "SELECT id, password FROM users WHERE email = ?";
+  const query = "SELECT id, name, password FROM users WHERE email = ?";
   const values = [email];
 
   try {
     const [rows] = await pool.query<RowDataPacket[]>(query, values);
 
     if (rows.length === 0) {
-      error("Failed to auth User: email not found");
+     throw error("Failed to auth User: email not found");
     }
 
-    const { password, id } = rows[0] as Pick<Users, "id" | "password">;
-    return { password, id };
+    const { password, id, name } = rows[0] as Pick<Users, "id" | "password" | "name">;
+
+    if (!id) {
+      throw error("Id is Missing");
+    }
+
+    return { hashed: password, id, name };
   } catch (err) {
     if (err instanceof Error) {
       console.error(err.message);
+      throw error(err.message)
     } else {
       console.error("Unknown error", err);
-      error("Unknown error occurred during user auth");
+      throw new Error("Unknown error occurred during user auth");
     }
   }
 };

@@ -4,6 +4,7 @@ import { Users } from "../types/Users";
 import { userRegister, userAuth } from "../repositories/UserRepository";
 import { error } from "../utils/manageError";
 import { tokenFactory } from "../utils/tokenFactory";
+import { hashPassword, comparePassword } from "../utils/passHash";
 
 export class UsersManager implements UserManager {
   async createUser(
@@ -12,13 +13,18 @@ export class UsersManager implements UserManager {
   const { name, email, password } = userData;
 
   if (!name || !email || !password) {
-    error("All fields are required");
+    throw error("All fields are required");
   }
 
   try {
-    const newUser = await userRegister(userData);
 
-    const {id, name, email} = newUser; 
+    const hashedPassword = await hashPassword(password);
+
+    const userPassHash = {...userData, password: hashedPassword}
+
+    const newUser = await userRegister(userPassHash);
+
+    const { id } = newUser; 
 
     if (!id) {
       throw error("Missing Id");
@@ -29,6 +35,7 @@ export class UsersManager implements UserManager {
     }
 
     const token = tokenFactory(payload);
+
 
     return {
       success: true,
@@ -47,8 +54,44 @@ export class UsersManager implements UserManager {
   }
 }
 
-validateUser(userData: Pick<Users, "email" | "password">): Promise<genericResponse<{ token?: string; }>> {
-    
+async validateUser(userData: Pick<Users, "email" | "password">): Promise<genericResponse<{ token?: string; }>> {
+  const { email, password } = userData;
+  
+  if (!email || !password) {
+    throw error("All fields are required");
+  }
+
+  try {
+    const { hashed, id, name } = await userAuth({ email });
+
+    const passwordMatach = await comparePassword(password, hashed);
+
+    if (!passwordMatach) {
+      throw error("Credentials are incorrect");
+    }
+
+    const payload = {
+      id,
+      name,
+      email
+    }
+
+    const token = tokenFactory(payload);
+
+    return {
+      success: true,
+      message: "Authentication Successfully",
+      data: { token }
+    };
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error("Error validating user:", err);
+      throw error(err.message);
+    } else {
+      console.error(err);
+      throw new Error("Unknow error");
+    }
+  }
 }
   
 }
