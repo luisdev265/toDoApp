@@ -1,11 +1,10 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import indexRouter from "./routes/index.routes.js";
+import userRouter from "./routes/user.routes.js"
 
-dotenv.config();
 
 const app = express();
 
@@ -33,6 +32,7 @@ app.use(cookieParser());
  * Routes
  */
 app.use("/", indexRouter);
+app.use("/api", userRouter);
 
 /**
  * 404 Handler

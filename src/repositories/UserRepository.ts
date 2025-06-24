@@ -1,9 +1,11 @@
-import { pool } from "../db/pool";
+import { pool } from "../db/pool.js";
 import type { Users, AuthUser } from "../types/Users";
 import type { OkPacket, RowDataPacket } from "mysql2";
-import { error } from "../utils/manageError";
+import { error } from "../utils/manageError.js";
 
 type PublicUser = Omit<Users, "password">;
+type userRecord = Pick<Users, "id" | "password" | "name">;
+type userEmail = Pick<Users, "email">;
 
 /**
  * Creates a new user in the database.
@@ -12,32 +14,35 @@ type PublicUser = Omit<Users, "password">;
  *          Throws an error if the user creation fails.
  */
 
-export const userRegister = async (
-  userData: Users
-): Promise<PublicUser> => {
+export const userRegister = async (userData: Users): Promise<PublicUser> => {
   const { name, email, password } = userData;
   const query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
   const values = [name, email, password];
 
   try {
-    const [result] = await pool.query<OkPacket>(query, values);
-    const id = result.insertId;
+    const existingUser = await userExist({ email });
 
-    if (!id) {
+    if (existingUser) {
+      throw error("User already Exist");
+    }
+
+    const [result] = await pool.query<OkPacket>(query, values);
+    const idNewUser = result.insertId;
+
+    if (!idNewUser) {
       throw error("Failed to register new user");
     }
 
-    const newUser = { id, name, email };
+    const newUser = { id: idNewUser, name, email };
 
     return newUser;
   } catch (err) {
     if (err instanceof Error) {
-      console.error(err.message);
-      throw error(err.message);
+      console.error("DB insert error:", err);
+      throw error(err.message || "Unknown DB error during user creation");
     } else {
       console.error("Unknown error", err);
       throw new Error("Unknown error occurred during user creation");
-
     }
   }
 };
@@ -47,35 +52,53 @@ export const userRegister = async (
  * @param userData - User data including only the email to search in the database.
  * @returns A promise that resolves a get request with data user, just his encripted password
  */
-export const userAuth = async (
-  userData: Pick<Users, "email">
-): Promise<AuthUser> => {
+export const userAuth = async (userData: userEmail): Promise<AuthUser> => {
   const { email } = userData;
 
-  const query = "SELECT id, name, password FROM users WHERE email = ?";
-  const values = [email];
-
   try {
-    const [rows] = await pool.query<RowDataPacket[]>(query, values);
+    const existingUser = await userExist({ email });
 
-    if (rows.length === 0) {
-     throw error("Failed to auth User: email not found");
+    if (!existingUser) {
+      throw error("User with this email already exists");
     }
 
-    const { password, id, name } = rows[0] as Pick<Users, "id" | "password" | "name">;
+    const { id, name, password } = existingUser;
 
     if (!id) {
-      throw error("Id is Missing");
+      throw error("User not exist");
     }
 
     return { hashed: password, id, name };
   } catch (err) {
     if (err instanceof Error) {
       console.error(err.message);
-      throw error(err.message)
+      throw error(err.message);
     } else {
       console.error("Unknown error", err);
       throw new Error("Unknown error occurred during user auth");
     }
   }
+};
+
+/**
+ * Verify if a user already exist or not.
+ * @param email - Email recived in fronted reques
+ * @returns A promise that resolves if user exist or not inside database returned his info if its correct
+ */
+export const userExist = async (
+  userData: userEmail
+): Promise<userRecord | null> => {
+  const { email } = userData;
+  const query = "SELECT id, name, password FROM users WHERE email = ?";
+  const values = [email];
+
+  const [rows] = await pool.query<RowDataPacket[]>(query, values);
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const { id, name, password } = rows[0] as userRecord;
+
+  return { id, name, password };
 };

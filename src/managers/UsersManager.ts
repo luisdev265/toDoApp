@@ -1,10 +1,10 @@
 import { genericResponse } from "../types/genericResponses";
 import { UserManager } from "../types/UserManager";
 import { Users } from "../types/Users";
-import { userRegister, userAuth } from "../repositories/UserRepository";
-import { error } from "../utils/manageError";
-import { tokenFactory } from "../utils/tokenFactory";
-import { hashPassword, comparePassword } from "../utils/passHash";
+import { userRegister, userAuth } from "../repositories/UserRepository.js";
+import { error } from "../utils/manageError.js";
+import { tokenFactory } from "../utils/tokenFactory.js";
+import { hashPassword, comparePassword } from "../utils/passHash.js";
 
 export class UsersManager implements UserManager {
   async createUser(
@@ -36,7 +36,6 @@ export class UsersManager implements UserManager {
 
     const token = tokenFactory(payload);
 
-
     return {
       success: true,
       message: "User created successfully",
@@ -44,14 +43,15 @@ export class UsersManager implements UserManager {
     };
 
   } catch (err) {
-    if (err instanceof Error) {
-      console.error(err.message);
-      throw error(err.message);
-    } else {
-      console.error("Unknown error", err);
-      throw new Error("Unknown error occurred during user creation");
-    }
+  if (err instanceof Error) {
+    console.error("Create user error:", err.message);
+    throw error(err.message || "Unknown error during user creation");
+  } else {
+    console.error("Unknown error", err);
+    throw new Error("Unknown error occurred during user creation");
   }
+}
+
 }
 
 async validateUser(userData: Pick<Users, "email" | "password">): Promise<genericResponse<{ token?: string; }>> {
