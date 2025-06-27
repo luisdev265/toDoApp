@@ -1,32 +1,36 @@
 import type { Manager } from "../types/TaskManager";
-import { Task } from "../types/Tareas";
-import { pool } from "../db/pool";
-import { OkPacket } from "mysql2";
-import { genericResponse } from "../types/genericResponses";
+import type { Task } from "../types/Tasks";
+import type { genericResponse } from "../types/genericResponses";
+import { createTask } from "../repositories/TaskRepository.js";
+import { error } from "../utils/manageError.js";
 
-export class TaskManager implements Manager {
+export class TaskManager implements Manager{
   private idUser: number;
 
-  constructor(id: Manager["idUser"]) {
+  constructor(id: number) {
     this.idUser = id;
   }
 
-  async createTask(task: Task): Promise<genericResponse<Task>> {
-    const { title, description, priority, status } = task;
+  async createTask(dataTask: Omit<Task, "userId">): Promise<genericResponse<{ newTask: Task }>> {
+    const { title, description } = dataTask;
 
-    const query =
-      "INSERT into tasks (title, description, priority, state, idUser) values (?, ?, ?, ?, ?)";
+    if ( !title || !description ) {
+      throw error("All fields are required");
+    }
 
-    const values = [title, description, priority, status, this.idUser];
+    if (!this.idUser) {
+      throw error("Error task creation proccess");
+    }
 
     try {
-      const [result] = await pool.query<OkPacket>(query, values);
 
-      if (!result.insertId) {
-        throw new Error("Error Creating new Task");
-      }
-
-      return { result };
+      const newTask = await createTask({userId: this.idUser, ...dataTask});
+      
+      return {
+        success: true,
+        message: "Task Creation Succssesfully",
+        data: { newTask } 
+      };
     } catch (err) {
       if (err instanceof Error) {
         console.error("MySQL Error:", err.message);

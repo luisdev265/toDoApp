@@ -3,8 +3,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import indexRouter from "./routes/index.routes.js";
-import userRouter from "./routes/user.routes.js"
-
+import userRouter from "./routes/user.routes.js";
+import taskRouter from "./routes/task.routes.js";
+import limiter from "./middlewares/rateLimiter.middleware.js";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.use(
   })
 );
 
+app.use(limiter);
+
 /**
  * Global Use Middlewares
  */
@@ -33,6 +36,7 @@ app.use(cookieParser());
  */
 app.use("/", indexRouter);
 app.use("/api", userRouter);
+app.use("/api", taskRouter);
 
 /**
  * 404 Handler

@@ -9,11 +9,14 @@ type userEmail = Pick<Users, "email">;
 
 /**
  * Creates a new user in the database.
+ * 
  * @param userData - Object containing the user's name, email, and password.
+ * 
  * @returns A promise that resolves to the created user object (without the password) including its ID.
- *          Throws an error if the user creation fails.
+ * 
+ * @throws An error if the user creation fails.
+ * 
  */
-
 export const userRegister = async (userData: Users): Promise<PublicUser> => {
   const { name, email, password } = userData;
   const query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
@@ -42,15 +45,20 @@ export const userRegister = async (userData: Users): Promise<PublicUser> => {
       throw error(err.message || "Unknown DB error during user creation");
     } else {
       console.error("Unknown error", err);
-      throw new Error("Unknown error occurred during user creation");
+      throw error("Unknown error occurred during user creation");
     }
   }
 };
 
 /**
  * Auth query - get user data.
+ * 
  * @param userData - User data including only the email to search in the database.
- * @returns A promise that resolves a get request with data user, just his encripted password
+ * 
+ * @returns A promise that resolves a get request with data user, just his encripted password.
+ * 
+ * @throws An error if user don't exist.
+ * 
  */
 export const userAuth = async (userData: userEmail): Promise<AuthUser> => {
   const { email } = userData;
@@ -85,7 +93,7 @@ export const userAuth = async (userData: userEmail): Promise<AuthUser> => {
  * @param email - Email recived in fronted reques
  * @returns A promise that resolves if user exist or not inside database returned his info if its correct
  */
-export const userExist = async (
+const userExist = async (
   userData: userEmail
 ): Promise<userRecord | null> => {
   const { email } = userData;

@@ -1,14 +1,12 @@
 import mysql from "mysql2/promise"
-import dotenv from "dotenv";
-
-dotenv.config();
+import { config } from "../config/config.js";
 
 // Create a pool to manage conections and querys to database
 // Modify crdentials with yours to make tests
-const host = process.env.DB_HOST;
-const user = process.env.DB_USER;
-const password = process.env.DB_PASSWORD;
-const database = process.env.DB_NAME;
+const host = config.db.host;
+const user = config.db.user;
+const password = config.db.password;
+const database = config.db.name;
 
 export const pool = mysql.createPool({
   host,
