@@ -1,11 +1,28 @@
-import { UsersManager } from "../managers/UsersManager.js";
 import type { Response, Request } from "express";
+import { FactoryManager } from "../managers/FactoryManager.js";
 
+/**
+ * Controller for user registration.
+ *
+ * Expects in the request body:
+ * - name: the name of the user
+ * - email: the email of the user
+ * - password: the password for the user
+ *
+ * Responds with:
+ * - status(201) if registration is successful
+ * - status(400) if there is a client-side error
+ * - status(500) if an unknown server error occurs
+ *
+ * @param req - Express request
+ * @param res - Express response
+ */
 export const userRegister = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const user = new UsersManager();
+  const factory = new FactoryManager();
+  const user = factory.createUserManager();
   const { name, email, password } = req.body;
   const userData = { name, email, password };
 
@@ -32,8 +49,24 @@ export const userRegister = async (
   }
 };
 
+/**
+ * Controller for user authentication (login).
+ *
+ * Expects in the request body:
+ * - email: the email of the user
+ * - password: the password of the user
+ *
+ * Responds with:
+ * - status(200) if authentication is successful
+ * - status(400) if there is a client-side error
+ * - status(500) if an unknown server error occurs
+ *
+ * @param req - Express request
+ * @param res - Express response
+ */
 export const userAuth = async (req: Request, res: Response) => {
-  const user = new UsersManager();
+  const factory = new FactoryManager();
+  const user = factory.createUserManager();
   const { email, password } = req.body;
   const userData = { email, password };
 

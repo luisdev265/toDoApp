@@ -10,6 +10,7 @@ import { hashPassword, comparePassword } from "../utils/passHash.js";
  * Class UserManager - Includes all business logic for basic user authentication.
  */
 export class UsersManager implements UserManager {
+  
   /**
    * Handles user registration with hashing and JWT generation for authentication.
    *
@@ -93,7 +94,6 @@ export class UsersManager implements UserManager {
    *
    * @throws Error if fields are missing, credentials are invalid, or other authentication errors occur.
    */
-
   async validateUser(
     userData: Pick<Users, "email" | "password">
   ): Promise<genericResponse<{ token: string }>> {
@@ -104,7 +104,7 @@ export class UsersManager implements UserManager {
     }
 
     try {
-      const { hashed, id, name } = await userAuth({ email });
+      const { hashed, id, name } = await userAuth(email);
 
       const passwordMatch = await comparePassword(password, hashed);
 

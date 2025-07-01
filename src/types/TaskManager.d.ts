@@ -19,7 +19,7 @@ export interface Manager {
    * @param idUser - ID of the user whose tasks are to be fetched.
    * @returns A promise resolving to a list of tasks wrapped in a generic API response.
    */
-  // getTasks(idUser: Task["userId"]): Promise<genericResponse<Task[]>>;
+  getTasks(): Promise<genericResponse<Task[]>>;
 
   /**
    * Updates an existing task.
