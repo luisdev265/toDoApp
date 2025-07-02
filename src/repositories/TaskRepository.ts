@@ -4,6 +4,9 @@ import type { Task } from "../types/Tasks";
 import { pool } from "../db/pool.js";
 import { userExist } from "./UserRepository.js";
 
+type getTaskFilter = Pick<Task, "userId"> &
+  Partial<Pick<Task, "priority" | "status">>;
+
 /**
  *
  * Create task query function.
@@ -79,12 +82,23 @@ export const createTask = async (taskData: Task): Promise<Task> => {
  * @throws an error if something fails during query execution.
  *
  */
-export const getAllTaskUser = async (
-  userId: Task["userId"]
-): Promise<Task[]> => {
-  const query =
+export const getAllTaskUser = async (taskData: getTaskFilter): Promise<Task[]> => {
+  const { userId, status, priority } = taskData;
+
+  let query =
     "SELECT id, title, description, priority, status, id_user FROM tasks WHERE id_user = ?";
-  const values = [userId];
+  const values: [string | number] = [userId];
+
+  if (status && priority) {
+    query += " AND status = ? AND priority = ?";
+    values.push(status as string, priority as string);
+  } else if (status) {
+    query += " AND status = ?";
+    values.push(status as string);
+  } else if (priority) {
+    query += " AND priority = ?";
+    values.push(priority as string);
+  }
 
   try {
     const existingUser = await userExist(userId);

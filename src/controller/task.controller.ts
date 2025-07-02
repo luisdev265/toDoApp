@@ -1,6 +1,6 @@
 import { FactoryManager } from "../managers/FactoryManager.js";
 import type { Request, Response } from "express";
-
+import { parseEnumQuery } from "../utils/parseQuerys.js";
 /**
  * Controller to create a new task for a user.
  *
@@ -68,11 +68,24 @@ export const getAllTasks = async (
   res: Response
 ): Promise<void> => {
   const { userId } = req.body;
+  const { status: statusRaw, priority: priorityRaw } = req.query;
+
   const factory = new FactoryManager();
   const task = factory.createTaskManager(userId);
 
+  const allowedPriorities = ["low", "medium", "high"] as const;
+  const allowedStatuses = ["pending", "completed"] as const;
+
+  const priority = parseEnumQuery(priorityRaw, allowedPriorities);
+  const status = parseEnumQuery(statusRaw, allowedStatuses); 
+
+  const filters = {
+    ...(status && {status}),
+    ...(priority && {priority})
+  };
+
   try {
-    const { success, message, data } = await task.getTasks();
+    const { success, message, data } = await task.getTasks(filters);
 
     res.status(201).json({ success, message, data });
   } catch (err) {
