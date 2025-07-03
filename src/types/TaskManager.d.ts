@@ -27,10 +27,9 @@ export interface Manager {
    * @param tarea - Partial information with the fields to update.
    * @returns A promise resolving to the updated task data wrapped in a generic API response.
    */
-  // putTask(
-  //   idTask: number,
-  //   tarea: Partial<Task>
-  // ): Promise<genericResponse<Partial<Task>>>;
+   putTask(
+     taskData: Partial<Task>
+   ): Promise<genericResponse<Partial<Task>>>;
 
   /**
    * Deletes a task.

@@ -1,4 +1,4 @@
-import type { OkPacket, RowDataPacket } from "mysql2";
+import type { OkPacket, RowDataPacket, ResultSetHeader  } from "mysql2";
 import { error } from "../utils/manageError.js";
 import type { Task } from "../types/Tasks";
 import { pool } from "../db/pool.js";
@@ -72,15 +72,27 @@ export const createTask = async (taskData: Task): Promise<Task> => {
 };
 
 /**
+ * Retrieves all tasks for a specific user, with optional filtering by status and priority.
  *
- * Get all tasks of an especific user.
+ * @param {getTaskFilter} taskData - An object containing:
+ *   - userId: The ID of the user whose tasks will be retrieved.
+ *   - status (optional): The status to filter tasks by.
+ *   - priority (optional): The priority to filter tasks by.
  *
- * @param userData - Desestructuring just id of his data.
+ * @returns {Promise<Task[]>} A promise that resolves with an array of Task objects fetched from the database.
  *
- * @returns A promise that resolves a fetch selection of tasks in db.
+ * @throws Will throw an error if:
+ *   - The user does not exist.
+ *   - No tasks are found for the user.
+ *   - A database query error occurs during execution.
  *
- * @throws an error if something fails during query execution.
- *
+ * @example
+ * const tasks = await getAllTaskUser({
+ *   userId: 1,
+ *   status: "pending",
+ *   priority: "high"
+ * });
+ * console.log(tasks);
  */
 export const getAllTaskUser = async (taskData: getTaskFilter): Promise<Task[]> => {
   const { userId, status, priority } = taskData;
@@ -126,3 +138,103 @@ export const getAllTaskUser = async (taskData: getTaskFilter): Promise<Task[]> =
     }
   }
 };
+
+/**
+ * Updates a task in the database with the provided partial fields.
+ *
+ * @param {Partial<Task>} taskData - An object containing the fields to update:
+ *   - id: (required) ID of the task to update.
+ *   - userId: (required) ID of the user who owns the task.
+ *   - title: (optional) New title for the task.
+ *   - description: (optional) New description for the task.
+ *   - status: (optional) New status for the task.
+ *   - priority: (optional) New priority for the task.
+ *
+ * @returns {Promise<Partial<Task>>} A promise that resolves with an object containing the updated fields.
+ *
+ * @throws Will throw an error if:
+ *   - No fields are provided to update.
+ *   - Required fields (`id` or `userId`) are missing.
+ *   - The task is not found or does not belong to the user.
+ *   - A database error occurs during the update.
+ *
+ * @example
+ * const updatedTask = await updateTask({
+ *   id: 5,
+ *   userId: 2,
+ *   title: "New title",
+ *   priority: "high"
+ * });
+ * console.log(updatedTask);
+ * // Output:
+ * // {
+ * //   id: 5,
+ * //   userId: 2,
+ * //   title: "New title",
+ * //   priority: "high"
+ * // }
+ */
+
+export const updateTask = async (taskData: Partial<Task>): Promise<Partial<Task>> => {
+  const { title, description, status, priority, id, userId } = taskData;
+
+  let query = "UPDATE tasks SET ";
+  const updates: string[] = [];
+  const values: (string | number)[] = [];
+
+  if (title) {
+  updates.push("title = ?");
+  values.push(title);
+  }
+  if (description) {
+    updates.push("description = ?");
+    values.push(description);
+  }
+  if (priority) {
+    updates.push("priority = ?");
+    values.push(priority);
+  }
+  if (status) {
+    updates.push("status = ?");
+    values.push(status);
+  }
+
+  if (updates.length === 0) {
+    throw error("No fields provided to update");
+  }
+
+  if (!id || !userId) {
+    throw error("Missing fields");
+  }
+
+  query += updates.join(", ") + " WHERE id = ? AND id_user = ?";
+  values.push(id, userId);
+
+  try {
+    const [result] = await pool.query<ResultSetHeader>(query, values);
+
+    if (result.affectedRows === 0) {
+      throw error("Task not found or user does not own this task");
+    }
+
+    const updatedTask = {
+      ...(id && {id}),
+      ...(title && {title}),
+      ...(description && {description}),
+      ...(status && {status}),
+      ...(priority && {priority}),
+      ...(userId && {userId}),
+    };
+
+    return updatedTask
+
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error("DB update error:", err);
+      throw error(err.message || "Unknown DB error during updating task");
+    } else {
+      console.error("Unknown error", err);
+      throw error("Unknown error occurred during updating task");
+    }
+  }
+}

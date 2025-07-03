@@ -1,9 +1,8 @@
 import type { Manager } from "../types/TaskManager";
 import type { Task } from "../types/Tasks";
 import type { genericResponse } from "../types/genericResponses";
-import { createTask } from "../repositories/TaskRepository.js";
+import { createTask, getAllTaskUser, updateTask } from "../repositories/TaskRepository.js";
 import { error } from "../utils/manageError.js";
-import { getAllTaskUser } from "../repositories/TaskRepository.js";
 
 export class TaskManager implements Manager {
   private idUser: number;
@@ -108,4 +107,69 @@ export class TaskManager implements Manager {
       throw error("Unknown error has ocurred during task creation");
     }
   }
+
+/**
+ * Updates a task for the current user with the provided fields.
+ *
+ * @param {Partial<Task>} taskData - An object containing the task fields to update:
+ *   - id: (required) ID of the task to update.
+ *   - title: (optional) New title for the task.
+ *   - description: (optional) New description for the task.
+ *   - status: (optional) New status for the task.
+ *   - priority: (optional) New priority for the task.
+ *
+ * @returns {Promise<genericResponse<Partial<Task>>>} A promise that resolves with a genericResponse containing:
+ *   - success: true if the task was updated successfully.
+ *   - message: Confirmation message.
+ *   - data: An object with the updated fields.
+ *
+ * @throws Will throw an error if:
+ *   - The user is not identified (`userId` is missing).
+ *   - No fields are provided for updating.
+ *   - The task does not exist or does not belong to the user.
+ *   - A database error occurs during the update.
+ *
+ * @example
+ * const response = await taskManager.putTask({
+ *   id: 12,
+ *   title: "Revisar PR",
+ *   priority: "high"
+ * });
+ * console.log(response);
+ * // {
+ * //   success: true,
+ * //   message: "Tasks gotten succssesfully",
+ * //   data: { id: 12, userId: 2, title: "Revisar PR", priority: "high" }
+ * // }
+ */
+  async putTask(taskData: Partial<Task>): Promise<genericResponse<Partial<Task>>> {
+    const userId = this.idUser;
+    const { title, description, status, priority, id: taskId } = taskData;
+
+    if (!userId) {
+      throw error("Error updating task");
+    }
+
+    if (!title && !description && !status && !priority && !taskId) {
+      throw error("No field are provided");
+    }
+
+    try {
+      const updatedTask = await updateTask({userId, ...taskData});
+
+      return {
+        success: true,
+        message: "Tasks updated succssesfully",
+        data: updatedTask,
+      };
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("MySQL Error:", err.message);
+        throw error("Error updating task");
+      }
+      throw error("Unknown error has ocurred during task updating");
+    }
+      
+  } 
+
 }
