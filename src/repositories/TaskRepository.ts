@@ -1,4 +1,4 @@
-import type { OkPacket, RowDataPacket, ResultSetHeader  } from "mysql2";
+import type { RowDataPacket, ResultSetHeader } from "mysql2";
 import { error } from "../utils/manageError.js";
 import type { Task } from "../types/Tasks";
 import { pool } from "../db/pool.js";
@@ -43,7 +43,7 @@ export const createTask = async (taskData: Task): Promise<Task> => {
       throw error("User not Exist");
     }
 
-    const [result] = await pool.query<OkPacket>(query, values);
+    const [result] = await pool.query<ResultSetHeader>(query, values);
     const idNewTask = result.insertId;
 
     if (!idNewTask) {
@@ -94,7 +94,9 @@ export const createTask = async (taskData: Task): Promise<Task> => {
  * });
  * console.log(tasks);
  */
-export const getAllTaskUser = async (taskData: getTaskFilter): Promise<Task[]> => {
+export const getAllTaskUser = async (
+  taskData: getTaskFilter
+): Promise<Task[]> => {
   const { userId, status, priority } = taskData;
 
   let query =
@@ -175,7 +177,9 @@ export const getAllTaskUser = async (taskData: getTaskFilter): Promise<Task[]> =
  * // }
  */
 
-export const updateTask = async (taskData: Partial<Task>): Promise<Partial<Task>> => {
+export const updateTask = async (
+  taskData: Partial<Task>
+): Promise<Partial<Task>> => {
   const { title, description, status, priority, id, userId } = taskData;
 
   let query = "UPDATE tasks SET ";
@@ -183,8 +187,8 @@ export const updateTask = async (taskData: Partial<Task>): Promise<Partial<Task>
   const values: (string | number)[] = [];
 
   if (title) {
-  updates.push("title = ?");
-  values.push(title);
+    updates.push("title = ?");
+    values.push(title);
   }
   if (description) {
     updates.push("description = ?");
@@ -218,16 +222,15 @@ export const updateTask = async (taskData: Partial<Task>): Promise<Partial<Task>
     }
 
     const updatedTask = {
-      ...(id && {id}),
-      ...(title && {title}),
-      ...(description && {description}),
-      ...(status && {status}),
-      ...(priority && {priority}),
-      ...(userId && {userId}),
+      ...(id && { id }),
+      ...(title && { title }),
+      ...(description && { description }),
+      ...(status && { status }),
+      ...(priority && { priority }),
+      ...(userId && { userId }),
     };
 
-    return updatedTask
-
+    return updatedTask;
   } catch (err) {
     if (err instanceof Error) {
       console.error("DB update error:", err);
@@ -237,4 +240,48 @@ export const updateTask = async (taskData: Partial<Task>): Promise<Partial<Task>
       throw error("Unknown error occurred during updating task");
     }
   }
-}
+};
+
+/**
+ * Deletes a specific task belonging to a user from the database.
+ *
+ * @param {Pick<Task, "userId" | "id">} taskData - An object containing:
+ *   - userId: The ID of the user who owns the task.
+ *   - id: The ID of the task to delete.
+ *
+ * @returns {Promise<void>} Resolves when the task has been successfully deleted.
+ *
+ * @throws Will throw an error if:
+ *   - The task does not exist or does not belong to the user.
+ *   - A database error occurs during deletion.
+ *
+ * @example
+ * await deleteTaskId({
+ *   userId: 1,
+ *   id: 5
+ * });
+ * // Task with ID 5 for user ID 1 has been deleted if it existed.
+ */
+export const deleteTaskId = async (
+  taskData: Pick<Task, "userId" | "id">
+): Promise<void> => {
+  const { userId, id } = taskData;
+  const query = "DELETE FROM tasks WHERE id_user = ? AND id = ?";
+  const values = [userId, id];
+
+  try {
+    const [result] = await pool.query<ResultSetHeader>(query, values);
+
+    if (result.affectedRows === 0) {
+      throw error("Error deleting task");
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error("DB delete error:", err);
+      throw error(err.message || "Unknown DB error during deleting task");
+    } else {
+      console.error("Unknown error", err);
+      throw error("Unknown error occurred during deleting task");
+    }
+  }
+};

@@ -36,7 +36,7 @@ export interface Manager {
    * @param idTask - Unique ID of the task to delete.
    * @returns A promise resolving to a generic API response indicating the result of the operation.
    */
-  // deleteTask(idTask: number): Promise<genericResponse>;
+  deleteTask(taskData: Pick<Task, "id">): Promise<genericResponse<Pick<Task, "id" | "userId">>>;
 
   /**
    * Retrieves tasks filtered by priority ("low", "medium", or "high").

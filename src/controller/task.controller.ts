@@ -130,11 +130,11 @@ export const getAllTasks = async (
   const allowedStatuses = ["pending", "completed"] as const;
 
   const priority = parseEnumQuery(priorityRaw, allowedPriorities);
-  const status = parseEnumQuery(statusRaw, allowedStatuses); 
+  const status = parseEnumQuery(statusRaw, allowedStatuses);
 
   const filters = {
-    ...(status && {status}),
-    ...(priority && {priority})
+    ...(status && { status }),
+    ...(priority && { priority }),
   };
 
   try {
@@ -200,12 +200,12 @@ export const updateTask = async (req: Request, res: Response) => {
   const { userId, title, description, status, priority } = req.body;
   const { id } = req.params;
   const taskId = parseInt(id);
-  const taskData = {title, description, status, priority, id: taskId};
-  const factory = new FactoryManager;
+  const taskData = { title, description, status, priority, id: taskId };
+  const factory = new FactoryManager();
   const task = factory.createTaskManager(userId);
 
   try {
-     const { success, message, data } = await task.putTask(taskData);
+    const { success, message, data } = await task.putTask(taskData);
 
     res.status(201).json({ success, message, data });
   } catch (err) {
@@ -221,4 +221,64 @@ export const updateTask = async (req: Request, res: Response) => {
       });
     }
   }
-}
+};
+
+/**
+ * Controller to delete a specific task for a user.
+ *
+ * Expects:
+ * - `req.body.userId` (required): The ID of the user who owns the task.
+ * - `req.params.id` (required): The ID of the task to delete.
+ *
+ * Responds with:
+ * - HTTP 201 and JSON `{ success, message, data }` if the task is deleted successfully.
+ * - HTTP 400 with error details if validation or known deletion errors occur.
+ * - HTTP 500 with error details if an unknown server error occurs.
+ *
+ * @param {Request} req - Express request object containing:
+ *   - `userId` in the body.
+ *   - `id` in the URL parameters.
+ * @param {Response} res - Express response object for sending status and JSON responses.
+ *
+ * @returns {Promise<void>} Resolves when the response has been sent.
+ *
+ * @example
+ * // DELETE /tasks/8
+ * req.body = { userId: 1 }
+ *
+ * // Response:
+ * {
+ *   "success": true,
+ *   "message": "Tasks deleted succssesfully",
+ *   "data": {
+ *     "id": 8,
+ *     "userId": 1
+ *   }
+ * }
+ */
+export const deleteTask = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  const { id } = req.params;
+  const taskId = parseInt(id);
+
+  const factory = new FactoryManager();
+  const task = factory.createTaskManager(userId);
+
+  try {
+    const { success, message, data } = await task.deleteTask({ id: taskId });
+
+    res.status(201).json({ success, message, data });
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(400).json({
+        message: "Error deleting task",
+        error: err.message || "Unknown error during deleting",
+      });
+    } else {
+      res.status(500).json({
+        message: "Unknown error has occurred",
+        error: String(err),
+      });
+    }
+  }
+};
