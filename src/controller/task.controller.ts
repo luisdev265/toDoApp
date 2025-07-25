@@ -120,11 +120,12 @@ export const getAllTasks = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { userId } = req.body;
+  const { userId } = req.params;
+  const id = parseInt(userId);
   const { status: statusRaw, priority: priorityRaw } = req.query;
 
   const factory = new FactoryManager();
-  const task = factory.createTaskManager(userId);
+  const task = factory.createTaskManager(id);
 
   const allowedPriorities = ["low", "medium", "high"] as const;
   const allowedStatuses = ["pending", "completed"] as const;

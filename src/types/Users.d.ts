@@ -48,3 +48,9 @@ interface AuthUser {
    */
   hashed: string;
 }
+
+export interface Payload {
+  id: string | number;
+  name: string;
+  email: string;
+}

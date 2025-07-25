@@ -1,6 +1,6 @@
 import { pool } from "../db/pool.js";
 import type { Users, AuthUser } from "../types/Users";
-import type { OkPacket, RowDataPacket } from "mysql2";
+import type { RowDataPacket, ResultSetHeader } from "mysql2";
 import { error } from "../utils/manageError.js";
 
 type PublicUser = Omit<Users, "password">;
@@ -29,7 +29,7 @@ export const userRegister = async (userData: Users): Promise<PublicUser> => {
       throw error("User already Exist");
     }
 
-    const [result] = await pool.query<OkPacket>(query, values);
+    const [ result ] = await pool.query<ResultSetHeader>(query, values);
     const idNewUser = result.insertId;
 
     if (!idNewUser) {
