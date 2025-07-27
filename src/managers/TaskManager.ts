@@ -106,6 +106,9 @@ export class TaskManager implements Manager {
       };
     } catch (err) {
       if (err instanceof Error) {
+        if(err.message.toLowerCase().includes('not tasks exist')){
+          throw error("No tasks exist");
+        }
         console.error("MySQL Error:", err.message);
         throw error("Error getting tasks");
       }

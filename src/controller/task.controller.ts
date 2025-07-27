@@ -144,10 +144,18 @@ export const getAllTasks = async (
     res.status(201).json({ success, message, data });
   } catch (err) {
     if (err instanceof Error) {
-      res.status(400).json({
-        message: "Error in getting task",
-        error: err.message || "Unknown error during creation",
-      });
+      if (err.message.toLowerCase().includes("no tasks exist")) {
+        res.status(200).json({
+          success: false,
+          message: "No tasks exist",
+          data: []
+        });
+      } else {
+        res.status(400).json({
+          message: "Error in getting task",
+          error: err.message || "Unknown error during creation",
+        });
+      }
     } else {
       res.status(500).json({
         message: "Unknown error has occurred",
