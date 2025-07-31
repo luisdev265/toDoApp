@@ -6,6 +6,7 @@ import indexRouter from "./routes/index.routes.js";
 import userRouter from "./routes/user.routes.js";
 import taskRouter from "./routes/task.routes.js";
 import limiter from "./middlewares/rateLimiter.middleware.js";
+import googleRouter from "./routes/auth.google.routes.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use(cookieParser());
 app.use("/", indexRouter);
 app.use("/api", userRouter);
 app.use("/api", taskRouter);
+app.use("/api", googleRouter);
 
 /**
  * 404 Handler

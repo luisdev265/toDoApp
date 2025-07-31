@@ -13,4 +13,10 @@ export const config = {
     name: process.env.DB_NAME,
   },
   jwtSecret: process.env.JWT_SECRET,
+  googleCredential: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUri: process.env.GOOGLE_REDIRECT_URI,
+  },
+  frontendUrl: process.env.FRONTEND_URL,
 };

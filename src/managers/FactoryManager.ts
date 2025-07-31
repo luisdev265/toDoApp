@@ -2,6 +2,7 @@ import { TaskManager } from "./TaskManager.js";
 import type { Users } from "../types/Users";
 import { error } from "../utils/manageError.js";
 import { UsersManager } from "./UsersManager.js";
+import { GoogleAuthManager } from "./GoogleAuthManager.js";
 
 /**
  * Factory class to create new managers.
@@ -27,5 +28,13 @@ export class FactoryManager {
    */
   createUserManager(): UsersManager {
     return new UsersManager;
+  }
+
+  /**
+   * Handle creation of a new GoogleAuthManager.
+   * @returns GoogleAuthManager.
+   */
+  createGoogleAuthManager(): GoogleAuthManager {
+    return new GoogleAuthManager;
   }
 }
