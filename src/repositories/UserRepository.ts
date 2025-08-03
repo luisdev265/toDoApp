@@ -18,9 +18,9 @@ type userId = Users["email" | "id"];
  *
  */
 export const userRegister = async (userData: Users): Promise<PublicUser> => {
-  const { name, email, password } = userData;
-  const query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-  const values = [name, email, password];
+  const { id, name, email, password } = userData;
+  const query = "INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)";
+  const values = [id, name, email, password];
 
   try {
     const existingUser = await userExist(email);

@@ -10,6 +10,10 @@ import { hashPassword, comparePassword } from "../utils/passHash.js";
  * Class UserManager - Includes all business logic for basic user authentication.
  */
 export class UsersManager implements UserManager {
+  private idUser: number;
+  constructor(id: number) {
+    this.idUser = id;
+  }
   
   /**
    * Handles user registration with hashing and JWT generation for authentication.
@@ -38,12 +42,12 @@ export class UsersManager implements UserManager {
 
     if (!name || !email || !password) {
       throw error("All fields are required");
-    }
-
+    }    // const NewUserId = Factory.createIdFactory().generateUserId();
+    
     try {
       const hashedPassword = await hashPassword(password);
 
-      const userPassHash = { ...userData, password: hashedPassword };
+      const userPassHash = { ...userData, password: hashedPassword, id: this.idUser };
 
       const newUser = await userRegister(userPassHash);
 

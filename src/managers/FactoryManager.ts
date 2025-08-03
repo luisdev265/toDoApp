@@ -3,6 +3,7 @@ import type { Users } from "../types/Users";
 import { error } from "../utils/manageError.js";
 import { UsersManager } from "./UsersManager.js";
 import { GoogleAuthManager } from "./GoogleAuthManager.js";
+import { idFactory } from "./idFactory.js";
 
 /**
  * Factory class to create new managers.
@@ -27,7 +28,8 @@ export class FactoryManager {
    * @returns UsersManager.
    */
   createUserManager(): UsersManager {
-    return new UsersManager;
+    const id = this.createIdFactory().generateUserId();
+    return new UsersManager(id);
   }
 
   /**
@@ -36,5 +38,13 @@ export class FactoryManager {
    */
   createGoogleAuthManager(): GoogleAuthManager {
     return new GoogleAuthManager;
+  }
+
+  /**
+   * Handle creation of a new idFactory.
+   * @returns idFactory.
+   */
+  private createIdFactory(): idFactory {
+    return new idFactory;
   }
 }

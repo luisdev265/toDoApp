@@ -46,8 +46,6 @@ export class GoogleAuthManager {
       throw error("Missing environment variables for OAuth");
     }
 
-    console.log("Redirect URI que se está usando:", redirectURI);
-
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
