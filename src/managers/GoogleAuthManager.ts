@@ -10,20 +10,34 @@ const frontendURL = config.frontendUrl;
 const jwtSecret = config.jwtSecret;
 
 /**
- * @class GoogleAuthManager
- * @description Manages Google OAuth 2.0 authentication flow.
+ * GoogleAuthManager handles the OAuth 2.0 authentication flow with Google.
+ *
+ * It is responsible for:
+ * - Generating the Google authentication URL
+ * - Exchanging the authorization code for user info and access token
+ * - Delegating user creation to the UserManager
+ * - Returning a JWT and redirection data to the client
  */
 export class GoogleAuthManager {
   private userManager: UserManager;
 
+  /**
+   * Constructs a new instance of GoogleAuthManager.
+   *
+   * @param userManager - An instance implementing the UserManager interface, used for user registration.
+   */
   constructor(userManager: UserManager) {
     this.userManager = userManager;
   }
-  
+
   /**
-   * @method getGoogleAuthUrl
-   * @description Generates the Google OAuth 2.0 authentication URL.
-   * @returns {string} The Google authentication URL.
+   * Generates the Google OAuth 2.0 authentication URL.
+   *
+   * @returns A URL string that redirects the user to Google's consent screen.
+   *
+   * @example
+   * const url = authManager.getGoogleAuthUrl();
+   * // Redirect the user to this URL
    */
   getGoogleAuthUrl() {
     const scope = [
@@ -36,11 +50,22 @@ export class GoogleAuthManager {
   }
 
   /**
-   * @method googleCallbackLogic
-   * @description Handles the callback logic after Google OAuth 2.0 authentication.
-   * @param {string} code The authorization code received from Google.
-   * @returns {Promise<{token: string, frontendURL: string}>} An object containing the generated JWT token and the frontend URL.
-   * @throws {Error} If required environment variables for OAuth are missing or if authentication fails.
+   * Handles the callback logic after Google redirects the user back to your app.
+   *
+   * This method:
+   * - Exchanges the authorization code for an access token
+   * - Retrieves the user's profile information
+   * - Registers the user using the UserManager
+   * - Returns a JWT and frontend redirection data
+   *
+   * @param code - The authorization code received from Google's OAuth redirect.
+   * @returns An object containing the user's JWT, frontend redirect URL, ID and name.
+   *
+   * @throws Error if any environment variables are missing or if any step in the flow fails.
+   *
+   * @example
+   * const { token, frontendURL } = await authManager.googleCallbackLogic(code);
+   * res.redirect(`${frontendURL}?token=${token}`);
    */
   async googleCallbackLogic(code: string) {
     if (
@@ -82,7 +107,7 @@ export class GoogleAuthManager {
 
     const user: Users = await userRes.json();
 
-    const { data } = await this.userManager.createUser({...user});
+    const { data } = await this.userManager.createUser({ ...user });
 
     const token = data?.token;
 

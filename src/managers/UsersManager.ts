@@ -10,44 +10,55 @@ type providerConstructor = "google" | "local";
 type idUserConstructor = number | undefined;
 
 /**
- * Class UserManager - Includes all business logic for basic user authentication.
+ * UsersManager class encapsulates the business logic for user registration and authentication.
+ * It supports multiple providers (e.g., "local", "google") and handles password hashing,
+ * token generation, and error management.
  */
 export class UsersManager implements UserManager {
   private idUser: idUserConstructor;
   private provider: providerConstructor;
-  constructor(id: idUserConstructor = undefined, provider: providerConstructor = "local") {
+
+  /**
+   * Creates a new instance of UsersManager.
+   *
+   * @param id - Optional user ID (used mostly for local registrations).
+   * @param provider - Authentication provider type, defaults to "local".
+   */
+  constructor(
+    id: idUserConstructor = undefined,
+    provider: providerConstructor = "local"
+  ) {
     this.idUser = id;
     this.provider = provider;
   }
-  
+
   /**
-   * Handles user registration with hashing and JWT generation for authentication.
+   * Registers a new user and returns a token for authentication.
    *
-   * @param userData - Include all user data: name, email, password.
+   * This method:
+   * - Validates input fields
+   * - Hashes the password if provider is "local"
+   * - Stores the user in the database
+   * - Generates a JWT for future authenticated requests
    *
-   * This function performs:
-   *  - Password hashing
-   *  - Database registration
-   *  - JWT generation
+   * @param userData - Object containing the user's name, email, and password.
+   * @returns A promise resolving to an object with the user (excluding password) and a JWT token.
    *
-   * @returns A promise that resolves with:
-   * GenericResponse<{
-   *     user: { id: number, name: string, email: string },
-   *     token: string
-   * }>
-   *
-   * @throws Error when any step in the user creation process fails.
+   * @throws Error if any step fails during registration.
    */
   async createUser(
     userData: Omit<Users, "provider">
   ): Promise<
-    genericResponse<{ user: Omit<Users, "password" | "provider">; token: string }>
+    genericResponse<{
+      user: Omit<Users, "password" | "provider">;
+      token: string;
+    }>
   > {
-    const {id: idUser, name, email, password } = userData;
+    const { id: idUser, name, email, password } = userData;
 
     try {
       let hashedPassword: string | null = null;
-      
+
       if (this.provider === "local") {
         if (!name || !email || !password) {
           throw error("All fields are required");
@@ -59,7 +70,12 @@ export class UsersManager implements UserManager {
         }
       }
 
-      const userPassHash = { ...userData, password: hashedPassword, id: this.provider === "local" ? this.idUser : idUser, provider: this.provider };
+      const userPassHash = {
+        ...userData,
+        password: hashedPassword,
+        id: this.provider === "local" ? this.idUser : idUser,
+        provider: this.provider,
+      };
 
       const newUser = await userRegister(userPassHash);
 
@@ -94,21 +110,17 @@ export class UsersManager implements UserManager {
   }
 
   /**
-   * Handles user authentication by validating credentials and generating a JWT.
+   * Authenticates a user based on email and password.
    *
-   * @param userData - Basic user data for comparison: email and password in plain text.
+   * This method:
+   * - Fetches the user by email
+   * - Compares the input password with the stored hashed password
+   * - Generates and returns a JWT if valid
    *
-   * This function performs:
-   *  - Validates user existence
-   *  - Compares plain text password with hashed password
-   *  - Generates JWT for authenticated session
+   * @param userData - Object containing the user's email and plain text password.
+   * @returns A promise resolving to a JWT token if authentication is successful.
    *
-   * @returns A promise that resolves with:
-   * GenericResponse<{
-   *   token: string
-   * }>
-   *
-   * @throws Error if fields are missing, credentials are invalid, or other authentication errors occur.
+   * @throws Error if validation fails or credentials are incorrect.
    */
   async validateUser(
     userData: Pick<Users, "email" | "password">
