@@ -30,7 +30,6 @@ export const googleCallback = async (req: Request, res: Response) => {
     const googleAuthManager = factoryManager.createGoogleAuthManager();
     const {token, frontendURL, id, name} = await googleAuthManager.googleCallbackLogic(code);
 
-
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

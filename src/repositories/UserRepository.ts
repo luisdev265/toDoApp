@@ -3,7 +3,7 @@ import type { Users, AuthUser } from "../types/Users";
 import type { RowDataPacket, ResultSetHeader } from "mysql2";
 import { error } from "../utils/manageError.js";
 
-type PublicUser = Omit<Users, "password">;
+type PublicUser = Omit<Users, "password" | "provider">;
 type userRecord = Pick<Users, "id" | "password" | "name">;
 type userId = Users["email" | "id"];
 
@@ -18,9 +18,9 @@ type userId = Users["email" | "id"];
  *
  */
 export const userRegister = async (userData: Users): Promise<PublicUser> => {
-  const { id, name, email, password } = userData;
-  const query = "INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)";
-  const values = [id, name, email, password];
+  const { id, name, email, password = null, provider } = userData;
+  const query = "INSERT INTO users (id, name, email, password, provider) VALUES (?, ?, ?, ?, ?)";
+  const values = [id, name, email, password, provider];
 
   try {
     const existingUser = await userExist(email);
@@ -70,12 +70,12 @@ export const userAuth = async (email: userId): Promise<AuthUser> => {
     const existingUser = await userExist(email);
 
     if (!existingUser) {
-      throw error("User with this email already exists");
+      throw error("User with this email not exist");
     }
 
     const { id, name, password } = existingUser;
 
-    if (!id) {
+    if (!id || !name || !password) {
       throw error("User not exist");
     }
 

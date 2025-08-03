@@ -1,6 +1,7 @@
 import { config } from "../config/config.js";
-import { tokenFactory } from "../utils/tokenFactory.js";
 import { error } from "../utils/manageError.js";
+import type { Users } from "../types/Users.js";
+import { UserManager } from "../types/UserManager.js";
 
 const clientID = config.googleCredential.clientId;
 const clientSecret = config.googleCredential.clientSecret;
@@ -13,6 +14,12 @@ const jwtSecret = config.jwtSecret;
  * @description Manages Google OAuth 2.0 authentication flow.
  */
 export class GoogleAuthManager {
+  private userManager: UserManager;
+
+  constructor(userManager: UserManager) {
+    this.userManager = userManager;
+  }
+  
   /**
    * @method getGoogleAuthUrl
    * @description Generates the Google OAuth 2.0 authentication URL.
@@ -73,14 +80,12 @@ export class GoogleAuthManager {
       }
     );
 
-    const user = await userRes.json();
+    const user: Users = await userRes.json();
 
-    const token = await tokenFactory({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
+    const { data } = await this.userManager.createUser({...user});
 
-    return {token, frontendURL, id: user.id, name: user.name};
+    const token = data?.token;
+
+    return { token, frontendURL, id: user.id, name: user.name };
   }
 }

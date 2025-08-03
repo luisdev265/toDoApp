@@ -37,7 +37,8 @@ export class FactoryManager {
    * @returns GoogleAuthManager.
    */
   createGoogleAuthManager(): GoogleAuthManager {
-    return new GoogleAuthManager;
+    const userManager = new UsersManager(undefined, "google");
+    return new GoogleAuthManager(userManager);
   }
 
   /**

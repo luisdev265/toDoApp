@@ -6,13 +6,18 @@ import { error } from "../utils/manageError.js";
 import { tokenFactory } from "../utils/tokenFactory.js";
 import { hashPassword, comparePassword } from "../utils/passHash.js";
 
+type providerConstructor = "google" | "local";
+type idUserConstructor = number | undefined;
+
 /**
  * Class UserManager - Includes all business logic for basic user authentication.
  */
 export class UsersManager implements UserManager {
-  private idUser: number;
-  constructor(id: number) {
+  private idUser: idUserConstructor;
+  private provider: providerConstructor;
+  constructor(id: idUserConstructor = undefined, provider: providerConstructor = "local") {
     this.idUser = id;
+    this.provider = provider;
   }
   
   /**
@@ -34,20 +39,27 @@ export class UsersManager implements UserManager {
    * @throws Error when any step in the user creation process fails.
    */
   async createUser(
-    userData: Users
+    userData: Omit<Users, "provider">
   ): Promise<
-    genericResponse<{ user: Omit<Users, "password">; token: string }>
+    genericResponse<{ user: Omit<Users, "password" | "provider">; token: string }>
   > {
-    const { name, email, password } = userData;
+    const {id: idUser, name, email, password } = userData;
 
-    if (!name || !email || !password) {
-      throw error("All fields are required");
-    }    // const NewUserId = Factory.createIdFactory().generateUserId();
-    
     try {
-      const hashedPassword = await hashPassword(password);
+      let hashedPassword: string | null = null;
+      
+      if (this.provider === "local") {
+        if (!name || !email || !password) {
+          throw error("All fields are required");
+        }
+        hashedPassword = await hashPassword(password);
+      } else {
+        if (!name || !email) {
+          throw error("All fields are required");
+        }
+      }
 
-      const userPassHash = { ...userData, password: hashedPassword, id: this.idUser };
+      const userPassHash = { ...userData, password: hashedPassword, id: this.provider === "local" ? this.idUser : idUser, provider: this.provider };
 
       const newUser = await userRegister(userPassHash);
 

@@ -24,7 +24,13 @@ export interface Users {
    * Encrypted password of the user.
    * Passwords are encrypted using the bcrypt library.
    */
-  password: string;
+  password: string | null;
+
+  /**
+   * Provider of the user.
+   * Can be "google" or "local".
+   */
+  provider: "google" | "local";
 }
 
 /**

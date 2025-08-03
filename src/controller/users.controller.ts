@@ -24,7 +24,7 @@ export const userRegister = async (
   const factory = new FactoryManager();
   const user = factory.createUserManager();
   const { name, email, password } = req.body;
-  const userData = { name, email, password };
+  const userData = { name: name as string, email: email as string, password: password as string};
 
   try {
     const { success, message, data } = await user.createUser(userData);
