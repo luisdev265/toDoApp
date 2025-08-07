@@ -32,7 +32,7 @@ export class FactoryManager {
    */
   createUserManager(): UsersManager {
     const id = this.createIdFactory().generateUserId();
-    return new UsersManager(id);
+    return new UsersManager(id, "local");
   }
 
   /**

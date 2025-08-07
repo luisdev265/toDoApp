@@ -11,12 +11,22 @@ export interface UserManager {
    * @param userData - Data submitted in the user registration form.
    * @returns A promise that resolves to a generic API response containing the registered user and a JWT token.
    */
-  createUser(userData: Users): Promise<genericResponse<{user: Omit<Users, "password" | "provider">, token: string} | undefined>>;
+  createUser(userData: Omit<Users, "provider">): Promise<
+    | genericResponse<{
+        user: Omit<Users, "password" | "provider">;
+        token: string;
+      }>
+    | genericResponse<{
+        token: string;
+      }>
+  >;
 
   /**
    * Validates user credentials and logs in the user.
    * @param userData - Data submitted in the login form (email and password).
    * @returns A promise that resolves to a generic API response containing a JWT token if successful; otherwise, a failure response.
    */
-  validateUser(userData: Pick<Users, "email" | "password">): Promise<genericResponse<{ token?: string }>>;
+  validateUser(
+    userData: Pick<Users, "email" | "password">
+  ): Promise<genericResponse<{ token?: string }>>;
 }

@@ -46,13 +46,14 @@ export class UsersManager implements UserManager {
    *
    * @throws Error if any step fails during registration.
    */
-  async createUser(
-    userData: Omit<Users, "provider">
-  ): Promise<
-    genericResponse<{
-      user: Omit<Users, "password" | "provider">;
-      token: string;
-    }>
+  async createUser(userData: Omit<Users, "provider">): Promise<
+    | genericResponse<{
+        user: Omit<Users, "password" | "provider">;
+        token: string;
+      }>
+    | genericResponse<{
+        token: string;
+      }>
   > {
     const { id: idUser, name, email, password } = userData;
 
@@ -79,7 +80,11 @@ export class UsersManager implements UserManager {
 
       const newUser = await userRegister(userPassHash);
 
-      const { id } = newUser;
+      if (!newUser && this.provider === "local") {
+        throw error("User not created");
+      }
+
+      const id = this.provider === "local" && newUser ? newUser.id : idUser;
 
       if (!id) {
         throw error("Missing Id");
@@ -93,11 +98,25 @@ export class UsersManager implements UserManager {
 
       const token = tokenFactory(payload);
 
-      return {
-        success: true,
-        message: "User created successfully",
-        data: { user: newUser, token },
-      };
+      const returnValue =
+        this.provider === "local"
+          ? {
+              success: true,
+              message: "User created successfully",
+              data: { user: newUser, token },
+            }
+          : this.provider === "google" && newUser
+          ? {
+              success: true,
+              message: "User created successfully",
+              data: { user: newUser, token },
+            }
+          : {
+              success: true,
+              message: "User processed successfully",
+              data: { token },
+            };
+      return returnValue;
     } catch (err) {
       if (err instanceof Error) {
         console.error("Create user error:", err.message);

@@ -17,19 +17,36 @@ type userId = Users["email" | "id"];
  * @throws An error if the user creation fails.
  *
  */
-export const userRegister = async (userData: Users): Promise<PublicUser> => {
+export const userRegister = async (
+  userData: Users
+): Promise<PublicUser | undefined> => {
   const { id, name, email, password = null, provider } = userData;
-  const query = "INSERT INTO users (id, name, email, password, provider) VALUES (?, ?, ?, ?, ?)";
+  const query =
+    "INSERT INTO users (id, name, email, password, provider) VALUES (?, ?, ?, ?, ?)";
   const values = [id, name, email, password, provider];
 
   try {
     const existingUser = await userExist(email);
 
-    if (existingUser) {
+    if (existingUser && provider === "google" && existingUser.id !== id) {
+      if (!id || !existingUser.id) {
+        throw error("Missing id");
+      }
+
+      await updateId(existingUser.id, id);
+
+      return undefined;
+    }
+
+    if (existingUser && provider === "google") {
+      return undefined
+    }
+
+    if (existingUser && provider === "local") {
       throw error("User already Exist");
     }
 
-    const [ result ] = await pool.query<ResultSetHeader>(query, values);
+    const [result] = await pool.query<ResultSetHeader>(query, values);
     const idNewUser = result.insertId;
 
     if (!idNewUser) {
@@ -62,9 +79,8 @@ export const userRegister = async (userData: Users): Promise<PublicUser> => {
  */
 export const userAuth = async (email: userId): Promise<AuthUser> => {
   try {
-
     if (!email) {
-      throw error("Missing email")
+      throw error("Missing email");
     }
 
     const existingUser = await userExist(email);
@@ -92,13 +108,13 @@ export const userAuth = async (email: userId): Promise<AuthUser> => {
 };
 
 /**
- * 
+ *
  * Verify if a user already exists.
- * 
+ *
  * @param identifier - Email (string) or id (number) received from frontend
- * 
+ *
  * @returns A promise with user info if exists, else null
- * 
+ *
  */
 export const userExist = async (
   identifier: string | number
@@ -121,4 +137,16 @@ export const userExist = async (
 
   const { id, name, password } = rows[0] as userRecord;
   return { id, name, password };
+};
+
+const updateId = async (id: number, newId: number) => {
+  console.log(id, newId);
+
+  const query = "UPDATE users SET id = ? WHERE id = ?";
+  const values = [newId, id];
+  const [result] = await pool.query<ResultSetHeader>(query, values);
+  const affectedRows = result.affectedRows;
+  if (affectedRows === 0) {
+    throw error("Failed to update user");
+  }
 };

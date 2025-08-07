@@ -105,7 +105,8 @@ export class GoogleAuthManager {
       }
     );
 
-    const user: Users = await userRes.json();
+    const user: Omit<Users, "provider"> = await userRes.json();
+
 
     const { data } = await this.userManager.createUser({ ...user });
 
